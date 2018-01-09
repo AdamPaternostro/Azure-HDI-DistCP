@@ -11,7 +11,7 @@ Modify the parameters.  A unique cluster and storage account names are required 
 Modify the parameters and run the script.
 
 ## Adding additional storage accounts
-If you need to add additional storage accounts you will need to add them to the HDIDistCP.json (see second snippet below)
+If you need to add additional storage accounts you will need to add them to the HDIDistCP.json (e.g. you would add the REMOVED.blob.core.windows.net item to your template)
 ```
 "storageProfile": {
     "storageaccounts": [
