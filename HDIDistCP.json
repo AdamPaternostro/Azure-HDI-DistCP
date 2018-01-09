@@ -1,0 +1,218 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "0.9.0.0",
+    "parameters": {
+        "clusterName": {
+            "type": "string",
+            "defaultValue": "adampaternostro01",
+            "metadata": {
+                "description": "The name of the HDInsight cluster to create."
+            }
+        },
+        "clusterWorkerNodeCount": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "The number of nodes in the HDInsight cluster."
+            }
+        },
+        "clusterVMSize": {
+            "type": "string",
+            "defaultValue": "Standard_D5_V2",
+            "metadata": {
+                "description": "The VM size for the head and worker nodes.  D5 have great bandwidth."
+            }
+        },
+        "clusterStorageAccountName": {
+            "type": "string",
+            "defaultValue": "adampaternostro01",
+            "metadata": {
+                "description": "The name of the Azure storage account for HDI."
+            }
+        },
+        "clusterLoginUserName": {
+            "type": "string",
+            "defaultValue": "admin",
+            "metadata": {
+                "description": "These credentials can be used to submit jobs to the cluster and to log into cluster dashboards."
+            }
+        },
+        "clusterLoginPassword": {
+            "type": "securestring",
+            "defaultValue": "<<REMOVED>>",
+            "metadata": {
+                "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "eastus2",
+            "metadata": {
+                "description": "The location where all azure resources will be deployed."
+            }
+        },
+        "clusterVersion": {
+            "type": "string",
+            "defaultValue": "3.6",
+            "metadata": {
+                "description": "HDInsight cluster version."
+            }
+        },
+        "clusterKind": {
+            "type": "string",
+            "defaultValue": "HADOOP",
+            "metadata": {
+                "description": "The type of the HDInsight cluster to create."
+            }
+        },
+        "sshUserName": {
+            "type": "string",
+            "defaultValue": "sshuser",
+            "metadata": {
+                "description": "These credentials can be used to remotely access the cluster."
+            }
+        },
+        "sshPassword": {
+            "type": "securestring",
+            "defaultValue": "<<REMOVED>>",
+            "metadata": {
+                "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+            }
+        },
+        "identityCertificate": {
+            "defaultValue": "<<REMOVED>>",
+            "type": "securestring",
+            "metadata": {
+                "description": "Base 64 encoded certificate for ADLS"
+            }
+        },
+        "identityCertificatePassword": {
+            "defaultValue": "<<REMOVED>>",
+            "type": "securestring",
+            "metadata": {
+                "description": "Certificate Password"
+            }
+        },
+        "identityApplicationId": {
+            "defaultValue": "<<REMOVED>>",
+            "type": "string",
+            "metadata": {
+                "description": "Service Principle (Cert) Id"
+            }
+        },
+        "aadTenantId":
+        {
+            "defaultValue": "<<REMOVED>>",
+            "type": "string",
+            "metadata": {
+                "description": "Azure AD Tenant"
+            }           
+        }
+    },
+    "resources": [
+        {
+            "name": "[parameters('clusterStorageAccountName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "location": "[parameters('location')]",
+            "apiVersion": "2015-05-01-preview",
+            "dependsOn": [],
+            "tags": {},
+            "properties": {
+                "accountType": "Standard_LRS"
+            }
+        },
+        {
+            "apiVersion": "2015-03-01-preview",
+            "name": "[parameters('clusterName')]",
+            "type": "Microsoft.HDInsight/clusters",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/',parameters('clusterName'))]"
+            ],
+            "properties": {
+                "clusterVersion": "[parameters('clusterVersion')]",
+                "osType": "Linux",
+                "tier": "standard",
+                "clusterDefinition": {
+                    "kind": "[parameters('clusterKind')]",
+                    "configurations": {
+                        "gateway": {
+                            "restAuthCredential.isEnabled": true,
+                            "restAuthCredential.username": "[parameters('clusterLoginUserName')]",
+                            "restAuthCredential.password": "[parameters('clusterLoginPassword')]"
+                        },
+                        "clusterIdentity": {
+                            "clusterIdentity.applicationId": "[parameters('identityApplicationId')]",
+                            "clusterIdentity.certificate": "[parameters('identityCertificate')]",
+                            "clusterIdentity.aadTenantId": "[concat('https://login.windows.net/',parameters('aadTenantId'))]",
+                            "clusterIdentity.resourceUri": "https://management.core.windows.net/",
+                            "clusterIdentity.certificatePassword": "[parameters('identityCertificatePassword')]"
+                        }
+                    }
+                },
+                "storageProfile": {
+                    "storageaccounts": [
+                        {
+                            "name": "[concat(parameters('clusterStorageAccountName'),'.blob.core.windows.net')]",
+                            "isDefault": true,
+                            "container": "[parameters('clusterName')]",
+                            "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('clusterStorageAccountName')), '2015-05-01-preview').key1]"
+                        }
+                    ]
+                },
+                "computeProfile": {
+                    "roles": [
+                        {
+                            "name": "headnode",
+                            "minInstanceCount": 1,
+                            "targetInstanceCount": 2,
+                            "hardwareProfile": {
+                                "vmSize": "[parameters('clusterVMSize')]"
+                            },
+                            "osProfile": {
+                                "linuxOperatingSystemProfile": {
+                                    "username": "[parameters('sshUserName')]",
+                                    "password": "[parameters('sshPassword')]"
+                                }
+                            },
+                            "virtualNetworkProfile": null,
+                            "scriptActions": []
+                        },
+                        {
+                            "name": "workernode",
+                            "minInstanceCount": 1,
+                            "targetInstanceCount": "[parameters('clusterWorkerNodeCount')]",
+                            "hardwareProfile": {
+                                "vmSize": "[parameters('clusterVMSize')]"
+                            },
+                            "osProfile": {
+                                "linuxOperatingSystemProfile": {
+                                    "username": "[parameters('sshUserName')]",
+                                    "password": "[parameters('sshPassword')]"
+                                }
+                            },
+                            "virtualNetworkProfile": null,
+                            "scriptActions": []
+                        },
+                        {
+                            "name": "zookeepernode",
+                            "minInstanceCount": 1,
+                            "targetInstanceCount": 3,
+                            "hardwareProfile": {
+                                "vmSize": "Small"
+                            },
+                            "osProfile": {
+                                "linuxOperatingSystemProfile": {
+                                    "username": "[parameters('sshUserName')]",
+                                    "password": "[parameters('sshPassword')]"
+                                }
+                            },
+                            "virtualNetworkProfile": null,
+                            "scriptActions": []
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}
