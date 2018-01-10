@@ -1,5 +1,5 @@
 # Azure-HDI-DistCP
-Creates a HDInsight cluster then runs distcp remotely to copy data between blob and/or data lake (ADLS).  Distcp is ideal for 100 GB+ to 100TB+.  There are other tools like PowerShell, CLI 2.0, Azure Python SDK, ADLCopy and Azure Data Factory.  For really large sizes and/or millions of files distcp gets the job done quick and easy.  
+Creates a HDInsight cluster then runs distcp remotely to copy data between blob and/or data lake (ADLS).  Distcp is ideal for 100 GB+ to 100TB+.  There are other tools like PowerShell, CLI 2.0, Azure Python SDK, ADLCopy and Azure Data Factory.  For really large sizes and/or millions of files distcp gets the job done quick and easy.  With distcp you also know your costs since you are paying for the HDInsight cluster.  If you are copying the data in the same Azure region then there are no data egress charges.  You will be charged for the transactions (blob or ADLS).  
 
 ## Service Principle
 You will need a service principle for Azure Data Lake Store (ADLS) access.  See here to create one: https://github.com/AdamPaternostro/Azure-Create-HDInsight-Service-Principle
@@ -42,16 +42,16 @@ This is a way to get a ballpark estimate of your copy time.  This will depend on
 | Number of Machines          | 5       | |
 | Total GBps                  | 7.5     | |
 | Total Seconds to Copy       | 5333.33 | |
-| Total Minutes to Copy       | 88.89   | You need to add some overhead to this figure. I typically double for a SWAG. |
+| Total Minutes to Copy       | 88.89   | You need to add some overhead to this figure. I typically double for a SWAG.  You might need to triple or quadruple if you have millions of files. |
 
 Things to consider:
 * ADLS has a bandwidth limit (check you ADLS logs for throttling errors)
 * Azure Blob storage has a bandwidth limit (check your storage for throttling errors)
-* If you are getting throttled contact Azure support to see if the can raise your bandwidth)
+* If you are getting throttled contact Azure support to see if the can raise your bandwidth
 * Please review: https://docs.microsoft.com/en-us/azure/data-lake-store/data-lake-store-copy-data-wasb-distcp
 * Some Azure machines have their bandwidth published here: https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes (or run my bandwidth test on this Github).
 
 ## Known issues
 * Right now the cluster does not delete itself since the script is not testing when the distcp job is complete.  I am looking into enhancing the script.
-* This is using a SSH username and password, you can modify to use a key. 
+* This is using a SSH username and password, you can modify to use a key. The easiet why to modify the HDInsight template is to use the Azure portal to create a HDInsight cluster.  On the last step, do not press the Create button, press the export template link.  You can then copy and JSON snippets you need from the exported template.
 * You need to optimize your distcp parameters.  Make sure you do not create too many mappers and run out of memory.
