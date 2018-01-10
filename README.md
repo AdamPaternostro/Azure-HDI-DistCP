@@ -34,7 +34,7 @@ If you need to add additional storage accounts you will need to add them to the 
 This is a way to get a ballpark estimate of your copy time.  This will depend on many factors like you distcp parameters, the number of files, the size of the files, etc... so, please use this as a general best case guideline.
 
 | Description                 | Value   | Other |
-| --------------------------- |:-------:| -----:|
+| --------------------------- |--------:| ------|
 | Amount of data to copy (TB) | 40      | |
 | Amount of data to copy (GB) | 40000   | |
 | Standard_DS5_v2 (Gbps)      | 12      | https://github.com/AdamPaternostro/Azure-VM-Network-Bandwidth  |
@@ -52,6 +52,6 @@ Things to consider:
 * Some Azure machines have their bandwidth published here: https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes (or run my bandwidth test on this Github).
 
 ## Known issues
-Right now the cluster does not delete itself since the script is not testing when the distcp job is complete.  I am looking into enhancing the script.
-This is using a SSH username and password, you can modify to use a key. 
-You need to optimize your distcp parameters.  Make sure you do not create too many mappers and run out of memory.
+* Right now the cluster does not delete itself since the script is not testing when the distcp job is complete.  I am looking into enhancing the script.
+* This is using a SSH username and password, you can modify to use a key. 
+* You need to optimize your distcp parameters.  Make sure you do not create too many mappers and run out of memory.
